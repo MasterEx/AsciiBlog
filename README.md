@@ -37,5 +37,6 @@ to add these pages in the build-website.sh script yourselfes.
 
 ####ToDo
 
+ * Clean up the code!
  * Create a configuration file which contains all the static variables.
  * Find bugs and fix them!
