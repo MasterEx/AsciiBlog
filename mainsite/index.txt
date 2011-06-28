@@ -1,0 +1,12 @@
+Welcome Stranger!
+=================
+
+
+What's that?
+************************************************************************
+This is my blog!
+
+This webpage was created with http://www.methods.co.nz/asciidoc/index.html[asciidoc]!
+
+'Master_ex'
+************************************************************************
