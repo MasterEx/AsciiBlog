@@ -39,13 +39,19 @@ for year in $(ls $archive | grep -v "index.html"); do
 			echo "<a href=\""$day"\">"$day"</a><br/>" >> "$archive/$year/$month/index.html"				
 			
 		done
+		path='../../../'
+		. "$(dirname "$0")/../layouts/archiveLayout.sh"
 		echo $tail >> "$archive/$year/$month/index.html"
 		
 		echo "<a href=\""$month"\">"$month"</a><br/>" >> "$archive/$year/index.html"
 	done
+	path='../../'
+	. "$(dirname "$0")/../layouts/archiveLayout.sh"
 	echo $tail >> "$archive/$year/index.html"
 	
 	echo "<a href=\""$year"\">"$year"</a><br/>" >> "$archive/index.html"
 	#ls $archive/$year
 done
+path='../'
+. "$(dirname "$0")/../layouts/archiveLayout.sh"
 echo $tail >> "$archive/index.html"
