@@ -40,3 +40,17 @@ to add these pages in the build-website.sh script yourselfes.
  * Clean up the code!
  * Create a configuration file which contains all the static variables.
  * Find bugs and fix them!
+
+####Update
+
+12-10-2011
+Check also this blog post:
+[Hello World AsciiBlog :)](http://masterex.github.com/archive/2011/08/06/asciiblog.html)
+
+RSS description now is generated from content inside /rss comments, example:
+
+```shell
+//rss
+CONTENT
+//rss
+```
