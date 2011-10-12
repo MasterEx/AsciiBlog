@@ -47,7 +47,7 @@ to add these pages in the build-website.sh script yourselfes.
 Check also this blog post:
 [Hello World AsciiBlog :)](http://masterex.github.com/archive/2011/08/06/asciiblog.html)
 
-RSS description now is generated from content inside /rss comments, example:
+RSS description now is generated from content inside //rss comments, example:
 
 ```shell
 //rss
