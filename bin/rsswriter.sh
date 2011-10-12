@@ -20,11 +20,12 @@ echo "  </channel>
 </rss>" >> $FILE
 }
 
+#don't forget to set description
 function oitem {
 echo "    <item>
         <title>$1</title>
         <link>$2</link>
-        <description>$3</description>">> $FILE
+        <description>$description</description>">> $FILE
 }
 
 function citem {

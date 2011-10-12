@@ -4,7 +4,7 @@
 # https://github.com/MasterEx
 #
 # Description:
-# Uses the rsswriter.sh to create an rss which displays all posts.
+# Uses the rsswriter.sh to create an rss which displays all the posts.
 #
 
 main="$(dirname "$0")/../mainsite"
@@ -14,9 +14,9 @@ pageroot="$(dirname "$0")/../website"
 
 FILE="$pageroot/archive.rss"
 
-homepage="http://blog.address.com"
+homepage="http://masterex.github.com"
 
-open BLOGNAME $homepage "BLOGTITLE"
+open "Master's Touch" $homepage "Master_ex's personal blog"
 language "en-us"
 generator "just a shell script"
 
@@ -26,7 +26,9 @@ for entry in $(grep "*" $main/archive.txt); do
 	date=$(echo $entry | grep -o -e "[0-9]\+-[0-9]\+-[0-9]\+")
 	link=$(echo $entry | grep -o -e "\([a-zA-Z0-9/]\|-\)*.html")
 	title=$(echo $entry | grep  -o -e "\[.*\]" | sed -e "s/\[//g" | sed -e "s/\]//g")
-	oitem $title "$homepage/$link" $title
+	description=$(grep -Pzo '(?s)//rss.*//rss' "../"$(echo $link|sed -e "s/.html/.txt/g") | head -n -1  |tail -n +2 | sed -e "s/\\n/PERIKLIS/g")
+	
+	oitem $title "$homepage/$link" $description
 	ipubDate $date
 	citem
 done
