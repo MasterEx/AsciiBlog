@@ -30,7 +30,7 @@ for year in $(ls $archive | grep -v "index.html"); do
 			path='../../../../'
 			. "$(dirname "$0")/../layouts/archiveLayout.sh"
 			echo $head > "$archive/$year/$month/$day/index.html"
-			for article in $(ls $archive/$year/$month/$day | grep -v "index.html"); do
+			for article in $(ls $archive/$year/$month/$day/*.html| grep -v "index.html"); do
 				#echo "article: $article"
 				echo "<a href=\""$article"\">"$(head -1 $(dirname "$0")/../archive/$year/$month/$day/$(basename $article .html).txt)"</a><br/>" >> "$archive/$year/$month/$day/index.html"
 			done			
