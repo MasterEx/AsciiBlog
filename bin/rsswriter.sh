@@ -8,11 +8,12 @@ FILE="deafult.rss"
 
 function open {
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<rss version=\"2.0\">
+<rss xmlns:atom=\"http://www.w3.org/2005/Atom\" version=\"2.0\">
   <channel>
-    <title>$1</title>
-    <link>$2</link>
-    <description>$3</description>" > $FILE
+    <atom:link href=\"$1\" rel=\"self\" type=\"application/rss+xml\"/>
+    <title>$2</title>
+    <link>$3</link>
+    <description>$4</description>" > $FILE
 }
 
 function close {
