@@ -37,6 +37,9 @@ to add these pages in the build-website.sh script yourselfes.
 
 ####ToDo
 
+ * Remove site specific variables, CLEAN UP THE CODE! Make scripts run on
+ from every directory - not current directory specific.
+
  * Clean up the code!
  * Create a configuration file which contains all the static variables.
  * Find bugs and fix them!
