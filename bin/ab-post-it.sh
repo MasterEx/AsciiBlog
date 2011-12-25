@@ -42,7 +42,7 @@ mkdir -p $pageroot
 
 LAYOUT=myBlogPost        # customized layout based to layout2.
 
-ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$(dirname "$0")/../layouts/${LAYOUT}.conf --attribute icons --attribute iconsdir=$(dirname "$0")/../images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
+ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$(dirname "$0")/../layouts/${LAYOUT}.conf --attribute icons --attribute iconsdir=$(dirname "$0")/../website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
 
 $ASCIIDOC_HTML -o"$pageroot/${postname}.html" "$main/$archdate/$newpost"
 
@@ -61,7 +61,7 @@ cat "$main/archive.txt" | sed "4i $postentry" > "/tmp/archive.txt"
 
 mv /tmp/archive.txt "$main/archive.txt"
 
-ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$(dirname "$0")/../layouts/${LAYOUT}.conf --attribute icons --attribute iconsdir=$(dirname "$0")/../images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
+ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$(dirname "$0")/../layouts/${LAYOUT}.conf --attribute icons --attribute iconsdir=$(dirname "$0")/../website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
 
 $ASCIIDOC_HTML -o"$pageroot/archive.html" "$main/archive.txt"
 
