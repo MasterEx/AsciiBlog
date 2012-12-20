@@ -8,7 +8,7 @@ FILE="deafult.rss"
 
 function open {
 echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
-<rss xmlns:atom=\"http://www.w3.org/2005/Atom\" version=\"2.0\">
+<rss xmlns:content=\"http://purl.org/rss/1.0/modules/content/\" xmlns:wfw=\"http://wellformedweb.org/CommentAPI/\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" xmlns:atom=\"http://www.w3.org/2005/Atom\" xmlns:sy=\"http://purl.org/rss/1.0/modules/syndication/\" xmlns:slash=\"http://purl.org/rss/1.0/modules/slash/\" version=\"2.0\">
   <channel>
     <atom:link href=\"$1\" rel=\"self\" type=\"application/rss+xml\"/>
     <title>$2</title>
@@ -26,7 +26,13 @@ function oitem {
 echo "    <item>
         <title>$1</title>
         <link>$2</link>
-        <description>$description</description>">> $FILE
+        <description>$1</description>
+        <content:encoded>
+<![CDATA[
+		$description
+		]]>
+</content:encoded>
+        ">> $FILE
 }
 
 function citem {
