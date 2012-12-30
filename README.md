@@ -1,5 +1,8 @@
 #README
 
+IMPORTANT! AsciiBlog IS CHANGING. README HAS TO BE UPDATED. CODE HAS TO
+BE TESTED. BE AWARE!
+
 ####What is AsciiBlog
 
 Asciiblog is a blog engine/framework or better a way of blogging based on
