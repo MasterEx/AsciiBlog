@@ -4,21 +4,14 @@
 # https://github.com/MasterEx
 
 # TODO
-# * In create_rss move some variables to settings 											DONE
 # * Make it POSIX
 # * In post handle other symbols except - and duplicate posts with the same name
-# * Track also the time of the post in .asciiblog/archive 									DONE
-# * Sort the posts by chronological order													DONE
-# * Clean up the default layouts															DONE
 # * In build_all_posts if a file was added or deleted build the post correctly and also track the files that the post owns - this is needed when deleting a file
-# * Check if icon images are desplayed correctly - I HAVE TO CHANGE THE PATHS TO RELATIVES  DONE!
-# * Check all the asciidoc queries															DONE
 # * In delete, delete all the directory tree not in use
-# * Check if tmp files/structure is the expected											DONE
 # * Check if archive can be build with more layout options in mind							UNCOMPLETE
-# * Make description and keywords work														DONE
 # * Rename local variables
 # * Write the help
+# * Check if wrong number of arguments
 # MAYBES
 # * Change the path variable in the archive function and use a global with the blog's url
 # * Passing arguments to rsswriter normally
