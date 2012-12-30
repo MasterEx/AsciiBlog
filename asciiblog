@@ -26,6 +26,26 @@
 
 ASCIIBLOG_VERSION='1.0a'
 
+# echoes the help message
+function show_help {
+help_mesg=(
+	"AsciiBlog v.$ASCIIBLOG_VERSION - https://github.com/MasterEx/AsciiBlog"
+	"Periklis Ntanasis <pntanasis@gmail.com>                               "
+	"                                                                      "
+	" usage: asciiblog <option> [ARGUMENT]                                 "
+	"    help            Prints this help message                          "
+	"    build-all       Builds all the pages and published posts          "
+	"    build-pages     Builds all the pages                              "
+	"    delete          Deletes a published post                          "
+	"    init            Initializes a new asciiblog directory             "
+	"    new-post        Creates a new post in tmp                         "
+	"    post            Publishes an unpublished post                     "
+	"    tmp-build       Temporary builds all the pages and posts in tmp   "
+	)
+printf '%s\n' "${help_mesg[@]}"
+
+}
+
 # echoes the value of the given key
 # $1 : The configuration file
 # $2 : The value's key
@@ -464,7 +484,7 @@ while :
 do
 	case $1 in
 		help)
-			echo "This is help"
+			show_help
 			exit 0
 			;;
 		build-pages)
