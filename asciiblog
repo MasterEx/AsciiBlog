@@ -1,24 +1,62 @@
 #!/usr/bin/env bash
 
-# TODO
-# ADD the archive word to archive
-
 # Created by Periklis Ntanasis - Master_ex
 # https://github.com/MasterEx
+
+# TODO
+# * In create_rss move some variables to settings 											DONE
+# * Make it POSIX
+# * In post handle other symbols except - and duplicate posts with the same name
+# * Track also the time of the post in .asciiblog/archive 									DONE
+# * Sort the posts by chronological order													DONE
+# * Clean up the default layouts															DONE
+# * In build_all_posts if a file was added or deleted build the post correctly and also track the files that the post owns - this is needed when deleting a file
+# * Check if icon images are desplayed correctly - I HAVE TO CHANGE THE PATHS TO RELATIVES  DONE!
+# * Check all the asciidoc queries															DONE
+# * In delete, delete all the directory tree not in use
+# * Check if tmp files/structure is the expected											DONE
+# * Check if archive can be build with more layout options in mind							UNCOMPLETE
+# * Make description and keywords work														DONE
+# * Rename local variables
+# * Write the help
+# MAYBES
+# * Change the path variable in the archive function and use a global with the blog's url
+# * Passing arguments to rsswriter normally
+# * Merge rsswriter with asciiblog
+
+ASCIIBLOG_VERSION='1.0a'
+
+# echoes the value of the given key
+# $1 : The configuration file
+# $2 : The value's key
+#
+# Under the hood
+# It reads line per line the configuration file and if the key matches it returns the value.
+# A key-value pair is like key=value.
 function readArguments {
-	configFile=$1
-	configName=$2
+# not sure if the best way to set the line break... /n didn't worked as expected
+IFS='
+'
 	for line in $(cat $1)
 	do
-		if [[ $line == $2=* ]]
+		if [[ "$line" == $2=* ]]
 		then
-			echo $line | cut -d = -f 2			
+			echo "$line" | cut -d'=' -f 2
 		fi
 	done
+	unset IFS
 }
 
+# checks if we currently are under an asciiblog directory
+#
+# Under the hood
+# It searches for the .asciiblog directory to the current directory and
+# the upper ones until it finds it or it hits the /home directory.
+# In the end it echoes the directory where .asciiblog is located which
+# it should be our asciiblog's installation directory.
 function directory_check {
 	directory="/home"
+	# what if root runs asciiblog ? bad idea anyway :P
 	while [ "$(pwd)" != "/home" ]
 	do
 		for i in $( ls -a )
@@ -32,7 +70,6 @@ function directory_check {
 		done
 		cd ..
 	done
-
 	if [ $directory = "/home" ]
 	then
 		echo "This is not an AsciiBlog directory"
@@ -40,279 +77,256 @@ function directory_check {
 	fi
 }
 
+# creates the archive internal indexing
+# $1 : The directory where the generated archive directory is located (in the website or the tmp directory).
+# $2 : The path of the archive file. This is the file that contains the info about the posted articles (in the .asciiblog or the tmp directory).
+#
+# Under the hood
+# It traverses all the directories located under the $1/archive and creates an
+# index page with the contained directories or the contained articles in each one of them.
+# For the layout it uses the archiveLayout.sh which is a very naive bash script.
 function archive {
-	echo "in here"
 	archive="$1/archive"
-
+	# path is used from inside archiveLayout.sh
 	path='../'
 	. "$LAYOUTS/archiveLayout.sh"
-	
 	mkdir -p "$archive"
-	
 	echo $head > "$archive/index.html"
 	for year in $(ls $archive | grep -v "index.html"); do
-
 		path='../../'
 		. "$LAYOUTS/archiveLayout.sh"
 		echo $head > "$archive/$year/index.html"
 		for month in $(ls $archive/$year | grep -v "index.html"); do
-			#echo "year $year month $month"
-			
-			
 			path='../../../'
 			. "$LAYOUTS/archiveLayout.sh"
 			echo $head > "$archive/$year/$month/index.html"
-			for day in $(ls $archive/$year/$month | grep -v "index.html"); do
-			
+			for day in $(ls $archive/$year/$month | grep -v "index.html"); do			
 				path='../../../../'
 				. "$LAYOUTS/archiveLayout.sh"
 				echo $head > "$archive/$year/$month/$day/index.html"
 				for article in $(ls $archive/$year/$month/$day/*.html| grep -v "index.html"); do
-					echo "------ article: $article"
-					#echo "<a href=\""$article"\">"$(cat $1/archive.txt | grep $(echo $article | sed 's~.*archive\(.*\)~\1~') | uniq | sed 's~.*\[\(.*\)\]~\1~')"</a><br/>" >> "$archive/$year/$month/$day/index.html"
-					article_path=$(cat $2 | grep $(basename $article .html) | cut -d'^' -f 4)
-					article_title=$(head -1 $article_path)
+					article_path=$(cat $2 | grep $(basename $article .html) | cut -d'^' -f 5)
+					line_number=$(cat $article_path | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+					article_title=$(cat $article_path | sed -n $((${line_number}-1))p)
 					echo "<a href=\""$article"\">"$article_title"</a><br/>" >> "$archive/$year/$month/$day/index.html"
 				done			
-				echo $tail >> "$archive/$year/$month/$day/index.html"
-				
+				echo $tail >> "$archive/$year/$month/$day/index.html"				
 				echo "<a href=\""$day"\">"$day"</a><br/>" >> "$archive/$year/$month/index.html"				
-				
 			done
 			path='../../../'
 			. "$LAYOUTS/archiveLayout.sh"
-			echo $tail >> "$archive/$year/$month/index.html"
-			
+			echo $tail >> "$archive/$year/$month/index.html"			
 			echo "<a href=\""$month"\">"$month"</a><br/>" >> "$archive/$year/index.html"
 		done
 		path='../../'
 		. "$LAYOUTS/archiveLayout.sh"
-		echo $tail >> "$archive/$year/index.html"
-		
+		echo $tail >> "$archive/$year/index.html"		
 		echo "<a href=\""$year"\">"$year"</a><br/>" >> "$archive/index.html"
-		#ls $archive/$year
 	done
 	path='../'
 	. "$LAYOUTS/archiveLayout.sh"
 	echo $tail >> "$archive/index.html"
 }
 
-# very likely that it works!
+# creates an RSS feed. it uses the rsswriter.sh script
+# $1 : The websites location (website or tmp directory)
+# $2 : The path of the archive file. This is the file that contains the info about the posted articles (in the .asciiblog or the tmp directory).
+#
+# Under the hood
+# It creates the RSS by using the rsswriter.sh. To do that it reads all the
+# entries of the $2 file and it gets the required info. The site url and description
+# used are located in the configuration file. The content of every feed is
+# extracted from each generated html file and it's the part between the
+# <!-- MAIN_BODY --> and <!-- MAIN_BODY_END --> tags.
 function create_rss {
-	echo "create RSS"
 	. "$(dirname "$0")/rsswriter.sh"
 	pageroot="$1"
-
 	FILE="$pageroot/archive.rss"
-
-	homepage="http://masterex.github.com"
-
-	open "$homepage/archive.rss" "Master's Touch" $homepage "Master_ex's personal blog"
+	open "$SITE_URL/archive.rss" "$SITE_DESCRIPTION"
 	language "en-us"
 	generator "just a shell script"
-	echo "THE FILE IS $2"
-	# $2 is the archive file
-	for entry in $(cat $2)
+	for entry in $(cat $2 | sort -r)
 	do
 		year=$(echo $entry | cut -d'^' -f1)
 		month=$(echo $entry | cut -d'^' -f2)
 		day=$(echo $entry | cut -d'^' -f3)
-		date="$year/$month/$day"
-		date=$(date -d $date -R)
-		basename $(echo $entry | cut -d'^' -f4) .txt
-		link="$(basename $(echo $entry | cut -d'^' -f4) .txt).html"
-		title="$(head -1 $(echo $entry | cut -d'^' -f4))"
-		#description=$(grep -Pzo '(?s)//rss.*//rss' "../"$(echo $link|sed -e "s/.html/.txt/g") | head -n -1  |tail -n +2 | sed -e "s/\\n/PERIKLIS/g")
-		echo "DESCRIPTION"
+		time=$(echo $entry | cut -d'^' -f4)
+		date="$year/$month/$day $time"
+		date=$(date -d "$date" -R)
+		link="$(basename $(echo $entry | cut -d'^' -f5) .txt).html"		
+		line_number=$(cat $(echo $entry | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		title=$(cat $(echo $entry | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
 		description=$(cat $pageroot/archive/$year/$month/$day/$link | tr '\n' ' ' | sed -e 's/.*<!-- MAIN_BODY -->//g' | sed -e 's/<!-- MAIN_BODY_END -->.*//g')
-		echo "HERE IT IS $description"
-		# maybe add meta description in the future - ALSO TAKE DESCRIPTION AS ARGUMENT
-		oitem "$title" "$homepage/archive/$year/$month/$day/$link"
+		oitem "$title" "$SITE_URL/archive/$year/$month/$day/$link"
 		ipubDate "$date"
-		guid "$homepage/$link"
+		guid "$SITE_URL/$link"
 		citem
-	done
-	
+	done	
 	close
 }
 
+# checks if we are under an asciiblog directory and sets some globals
 if [ $1 != "init" ]
 then
-	# removed the if [ -d ".asciiblog ] , checks if asciiblog dir and sets the globals
 	ASCIIBLOG_DIR=$(directory_check)
-	# MAY RISE PROBLEMS
-	echo $ASCIIBLOG_DIR
 	ASCIIBLOG_ROOT="$(cd $ASCIIBLOG_DIR/.. && pwd)"
-	echo "here"	
-	echo $ASCIIBLOG_ROOT
 	IMAGES="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration images-dir)"
 	JAVASCRIPTS="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration javascripts-dir)"
 	STYLES="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration styles-dir)"
 	LAYOUTS="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration layouts-dir)"
+	SITE_URL="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration site-url)"
+	SITE_DESCRIPTION="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration site-description)"
+	YEAR="$(date +%Y)"
+	MONTH="$(date +%m)"
+	DAY="$(date +%d)"
+	TIME="$(date +%H:%M:%S)"
 fi
 
+# builds the static pages
+#
+# Under the hood
+# Build all the files included in the pages directory and places them in the
+# root directory of the generated website
 function build_website {
 	LAYOUT=myBlog
-	main="$ASCIIBLOG_ROOT/pages"
-	pageroot="$ASCIIBLOG_ROOT/website"
-
+	pages="$ASCIIBLOG_ROOT/pages"
+	website="$ASCIIBLOG_ROOT/website"
 	# Copy the needed files to the destination directory
-	cp -r "$IMAGES" "$JAVASCRIPTS" "$STYLES" $pageroot
-
+	cp -r "$IMAGES" "$JAVASCRIPTS" "$STYLES" $website
 	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$IMAGES/icons --attribute=badges"
-
-	# get all the files in the pages directory
-	for file in $(ls $main)
+	for file in $(ls $pages)
 	do
 		name="$(echo $file | cut -d'.' -f 1)"
-		$ASCIIDOC_HTML -o"$pageroot/$name.html" "$main/$file"
+		$ASCIIDOC_HTML -o"$website/$name.html" "$pages/$file"
 	done
 }
 
+# rebuilds all the posts
+#
+# Under the hood
+# Builds all the articles included in the archive file.
 function build_all_posts {
-	for file in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive);
+	previous_year='NaN'
+	for file in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive | sort -r);
 	do
 		year="$(echo $file | cut -d'^' -f 1 )"
 		month="$(echo $file | cut -d'^' -f 2 )"
 		day="$(echo $file | cut -d'^' -f 3 )"
-		file="$(echo $file | cut -d'^' -f 4 )"
-		echo $file
-		# TODO: delete files or add new ones
-		pageroot="$ASCIIBLOG_ROOT/website/archive/$year/$month/$day"
-		mkdir -p $pageroot
+		file="$(echo $file | cut -d'^' -f 5 )"
+		blogpostroot="$ASCIIBLOG_ROOT/website/archive/$year/$month/$day"
+		mkdir -p $blogpostroot
 		LAYOUT=myBlogPost
-		ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date="$DATE""
-	
-		$ASCIIDOC_HTML -o"$pageroot/$(basename $file .txt).html" "$file"
-		
+		ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=../../../../images/icons"
+		$ASCIIDOC_HTML -o"$blogpostroot/$(basename $file .txt).html" "$file"		
+		postname="$(basename $file .txt)"
+		line_number=$(cat $(echo $file | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		file=$(cat $(echo $file | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
+		if [ $previous_year != $year ]
+		then
+			archive_entries="$archive_entries $($LAYOUTS/archiveYearLine.sh "$year")"
+		fi
+		previous_year="$year"
+		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$file")"
 	done
-	# archive: have to sort the entries - MERGE WITH THE UPPER FOR
-	for line in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive)
-	do		
-		#echo $line
-		year="$(echo $line | cut -d'^' -f 1)"
-		month="$(echo $line | cut -d'^' -f 2)"
-		day="$(echo $line | cut -d'^' -f 3)"
-		article="$(echo $line | cut -d'^' -f 4)"
-		postname="$(basename $article .txt)"
-		#echo $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")
-		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")"
-	done
-	
 	# maybe rename to gen.html or something like that - also may delete it afterwards
 	echo $archive_entries > "$LAYOUTS/archive.html"	
 	LAYOUT=myBlogArchive
-	pageroot="$ASCIIBLOG_ROOT/website"
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
-	$ASCIIDOC_HTML -o"$pageroot/archive.html" "$LAYOUTS/empty.txt"
-
-	archive $pageroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
-	create_rss $pageroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
+	blogpostroot="$ASCIIBLOG_ROOT/website"
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=images/icons"
+	$ASCIIDOC_HTML -o"$blogpostroot/archive.html" "$LAYOUTS/empty.txt"
+	archive $blogpostroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
+	create_rss $blogpostroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
 }
 
+# posts a specified post that currently resides in the tmp directory
+# $1 : The original location of the article
+#
+# Under the hood
+# Checks if post is located inside tmp.
+# Moves the post files to the archive directory. Adds an entry in the arcive file.
+# Tracks the files that belong to the post by adding the files in the post_files
+# directory. This is later used for deleting the posts (actyally moves them to the deleted directory).
+# Creates the indexes and the rss.
 function post {
-	YEAR="$(date +%Y)"
-	MONTH="$(date +%m)"
-	DAY="$(date +%d)"
-
-	# create archive directory
 	archdate="$YEAR/$MONTH/$DAY"
 	archivedir="$ASCIIBLOG_ROOT/archive/$archdate"
 	echo $archivedir
 	mkdir -p "$archivedir"
 	mkdir -p "$ASCIIBLOG_ROOT/website/archive/$archdate"
-
 	if [ -d $1 ]
 	then
 		postdirectory="$(realpath $1)"
 	else
 		postdirectory="$(realpath $(dirname $1))"
-	fi
-	
+	fi	
 	if [ "$(dirname $postdirectory)" != "$ASCIIBLOG_ROOT/tmp" ]
 	then
 		echo "Not a valid post directory: $postdirectory"
 		exit 0;
-	fi
-	
+	fi	
 	cp -R "$postdirectory/"* "$archivedir"
-
 	# update the archive file
 	postname="$(echo $postdirectory | tr // '\n' | tail -1)"
-	echo "$YEAR^$MONTH^$DAY^$archivedir/$postname.txt" >> "$ASCIIBLOG_ROOT/.asciiblog/archive"
-
+	echo "$YEAR^$MONTH^$DAY^$TIME^$archivedir/$postname.txt" >> "$ASCIIBLOG_ROOT/.asciiblog/archive"
 	main="$ASCIIBLOG_ROOT/archive"
 	pageroot="$ASCIIBLOG_ROOT/website/archive/$archdate"
-
 	mkdir -p $pageroot
-
 	LAYOUT=myBlogPost        # customized layout based to layout2.
-
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date="$DATE""
-
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=../../../../images/icons"
 	$ASCIIDOC_HTML -o"$ASCIIBLOG_ROOT/website/archive/$YEAR/$MONTH/$DAY/$postname.html" "$archivedir/$postname.txt"
-
 	# update archive
-
 	LAYOUT=myBlog        # customized layout based to layout2.
 	main="$ASCIIBLOG_ROOT/pages"
-	pageroot="$ASCIIBLOG_ROOT/website"
-	echo "POSTENTRY"
-	
+	pageroot="$ASCIIBLOG_ROOT/website"	
 	archive_entries=""
-	
-	# archive: have to sort the entries
-	for line in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive)
-	do		
-		#echo $line
+	previous_year='NaN'
+	for line in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive | sort -r)
+	do
 		year="$(echo $line | cut -d'^' -f 1)"
 		month="$(echo $line | cut -d'^' -f 2)"
 		day="$(echo $line | cut -d'^' -f 3)"
-		article="$(echo $line | cut -d'^' -f 4)"
+		article="$(echo $line | cut -d'^' -f 5)"
 		postname="$(basename $article .txt)"
-		#echo $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")
-		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")"
-	done
-	
+		if [ $previous_year != $year ]
+		then
+			archive_entries="$archive_entries $($LAYOUTS/archiveYearLine.sh "$year")"
+		fi
+		previous_year="$year"
+		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		article=$(cat $(echo $line | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
+		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$article")"
+	done	
 	# maybe rename to gen.html or something like that - also may delete it afterwards
-	echo $archive_entries > "$LAYOUTS/archive.html"
-	
+	echo $archive_entries > "$LAYOUTS/archive.html"	
 	LAYOUT=myBlogArchive
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=images/icons"
 	$ASCIIDOC_HTML -o"$pageroot/archive.html" "$LAYOUTS/empty.txt"
-
 	# track the files that belong to the article
 	for files in $(ls $postdirectory);
 	do
 		echo "$files" >> "$ASCIIBLOG_ROOT/.asciiblog/post_files/$postname"
 	done
-	# I just deleted my whole blog with that !!! DANGEROUS
+	# I just deleted my whole blog with that !!! DANGEROUS - SHOULD BE OK NOW
 	rm -rf "$postdirectory"
-
-	# create the achiving directories
 	archive $pageroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
-
-	# create rss
-	#create_rss "$ASCIIBLOG_ROOT/archive"
 	create_rss $pageroot "$ASCIIBLOG_ROOT/.asciiblog/archive"
 }
 
+# creates an empty file intented to be a new post and prompts for editing it
+# $1 : The given file/post name
+#
+# Under the hood
+# Creates a directory and a file named as $1 in the tmp dir. If $1 is not 
+# provided then it'll be named as the current linux time.
 function new_post {
-	YEAR="$(date +%Y)"
-	MONTH="$(date +%m)"
-	DAY="$(date +%d)"
 	id="${1:-$(date +%s)}"
-
 	# create empty file
 	archive="$ASCIIBLOG_ROOT/archive"
 	tmp="$ASCIIBLOG_ROOT/tmp"
 	destdir="$tmp"
 	mkdir -p "$destdir/$id"
 	touch "$destdir/$id/$id.txt"
-
 	# add entry in temp archive
-	#echo "$YEAR^$MONTH^$DAY^$id" >> "$ASCIIBLOG_ROOT/.asciiblog/tmp_archive"
-
 	# ask user to edit the file
 	echo "$destdir/$id.txt was created"
 	echo -n "Do you want to edit this file now? (Y/N)"
@@ -323,128 +337,108 @@ function new_post {
 	fi
 }
 
+# builds the whole site in tmp and triggers the user's browser
+#
+# Under the hood
+# Generates all the static pages in one temporary directory.
+# Generates all the posts located in the archive file and in the tmp directory.
+# Creates a new archive file named archive_list. located in the temporary deirectory.
+# Creates the indexing. Creates the rss based on the archive_list. Prompts the user's browser.
 function tmp_build {
 	tempdir=$(mktemp -d)
-	VERS="8.1.0"
-	DATE="2006-10-22"
 	LAYOUT=myBlog        # customized layout based to layout2 of asciidoc.
-
 	main="$ASCIIBLOG_ROOT/pages"
 	pageroot="$tempdir"
-
 	# Copy the needed files to the destination directory
 	cp -r "$IMAGES" "$JAVASCRIPTS" "$STYLES" $pageroot
-
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$IMAGES/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
-
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=images/icons"
 	# get all the files in the pages directory
 	for file in $(ls $main)
 	do
 		name="$(echo $file | cut -d'.' -f 1)"
 		$ASCIIDOC_HTML -o"$pageroot/$name.html" "$main/$file"
 	done
-
 	# posts
-	#cp "$ASCIIBLOG_ROOT/pages/archive.txt" "$tempdir/archive.txt"
 	LAYOUT=myBlogPost
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
-
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=../../../../images/icons"
 	cp "$ASCIIBLOG_ROOT/.asciiblog/archive" "$tempdir/archive_list"
 	# update the archive file
-	#postname="$(echo $postdirectory | tr // '\n' | tail -1)"
-
-	for files in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive)
+	for files in $(cat $ASCIIBLOG_ROOT/.asciiblog/archive | sort -r)
 	do
-		YEAR="$(echo $files | cut -d'^' -f 1)"
-		MONTH="$(echo $files | cut -d'^' -f 2)"
-		DAY="$(echo $files | cut -d'^' -f 3)"
-		post="$(echo $files | cut -d'^' -f 4)"
+		year="$(echo $files | cut -d'^' -f 1)"
+		month="$(echo $files | cut -d'^' -f 2)"
+		day="$(echo $files | cut -d'^' -f 3)"
+		post="$(echo $files | cut -d'^' -f 5)"
 		postname="$(echo $post | tr // '\n' | tail -1)"
-		mkdir -p "$tempdir/archive/$YEAR/$MONTH/$DAY"
-		$ASCIIDOC_HTML -o"$tempdir/archive/$YEAR/$MONTH/$DAY/$(basename $postname .txt).html" "$post"
-		cp -r "$(dirname $post)/"*[!"$postname"] "$tempdir/archive/$YEAR/$MONTH/$DAY" &> /dev/null
+		mkdir -p "$tempdir/archive/$year/$month/$day"
+		$ASCIIDOC_HTML -o"$tempdir/archive/$year/$month/$day/$(basename $postname .txt).html" "$post"
+		cp -r "$(dirname $post)/"*[!"$postname"] "$tempdir/archive/$year/$month/$day" &> /dev/null
 	done
-	YEAR="$(date +%Y)"
-	MONTH="$(date +%m)"
-	DAY="$(date +%d)"
 	for files in $(ls $ASCIIBLOG_ROOT/tmp)
 	do
 		mkdir -p "$tempdir/archive/$YEAR/$MONTH/$DAY"
 		$ASCIIDOC_HTML -o"$tempdir/archive/$YEAR/$MONTH/$DAY/$files.html" "$ASCIIBLOG_ROOT/tmp/$files/$files.txt"
 		cp -r "$ASCIIBLOG_ROOT/tmp/$files/"*[!"$files.txt"] "$tempdir/archive/$YEAR/$MONTH/$DAY" &> /dev/null
-		#postentry="\* $YEAR-$MONTH-$DAY: link:archive/$YEAR/$MONTH/$DAY/${files}.html[$(head -1 $ASCIIBLOG_ROOT/tmp/$files/$files.txt)]"
-		#cat "$tempdir/archive.txt" | sed "4i $postentry" > "$tempdir/archivetmp.txt"
-		#mv "$tempdir/archivetmp.txt" "$tempdir/archive.txt"
-		echo "$YEAR^$MONTH^$DAY^$ASCIIBLOG_ROOT/tmp/$files/${files}.txt" >> "$tempdir/archive_list"
+		echo "$YEAR^$MONTH^$DAY^$TIME^$ASCIIBLOG_ROOT/tmp/$files/${files}.txt" >> "$tempdir/archive_list"
 	done
-
-	#LAYOUT=myBlog 
-	#ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
-	#$ASCIIDOC_HTML -o"$tempdir/archive.html" "$tempdir/archive.txt"
-
-	# archive: have to sort the entries
-	for line in $(cat $tempdir/archive_list)
+	previous_year='NaN'
+	for line in $(cat $tempdir/archive_list | sort -r)
 	do		
-		#echo $line
 		year="$(echo $line | cut -d'^' -f 1)"
 		month="$(echo $line | cut -d'^' -f 2)"
 		day="$(echo $line | cut -d'^' -f 3)"
-		article="$(echo $line | cut -d'^' -f 4)"
+		article="$(echo $line | cut -d'^' -f 5)"
 		postname="$(basename $article .txt)"
-		#echo $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")
-		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$(head -1 $article)")"
+		if [ $previous_year != $year ]
+		then
+			archive_entries="$archive_entries $($LAYOUTS/archiveYearLine.sh "$year")"
+		fi
+		previous_year="$year"
+		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		article=$(cat $(echo $line | cut -d'^' -f 5) | sed -n $((${line_number}-1))p)
+		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$article")"
 	done
-	
 	# maybe rename to gen.html or something like that - also may delete it afterwards
 	echo $archive_entries > "$LAYOUTS/archive.html"
-	
 	LAYOUT=myBlogArchive
-	ASCIIDOC_HTML="asciidoc --backend=xhtml11 --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=$ASCIIBLOG_ROOT/website/images/icons --attribute=badges --attribute=revision=$VERS  --attribute=date=$DATE"
+	ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=images/icons"
 	$ASCIIDOC_HTML -o"$pageroot/archive.html" "$LAYOUTS/empty.txt"
-
-	# create the achiving directories
 	archive $tempdir "$tempdir/archive_list"
-
-	# create rss
 	create_rss $tempdir "$tempdir/archive_list"
-
 	$BROWSER "$tempdir/index.html"
 	read -p "HIT ENTER TO TERMINATE THE TEMPORARY VIEW"
 	rm -rf $tempdir
-
 }
 
+# deletes a specified post
+# $1 : The post to be deleted - moved to .asciiblog/deleted
+#
+# Under the hood
+# Moves a article nad all it's files from their archive directory to
+# the .asciidoc/deleted directory. It uses the .asciidoc/post_files file to
+# to track the files that a post owns.
 function delete {
 	postname=$(basename $1 .txt)
 	path="$(realpath $(dirname $1))"
-
 	mkdir -p "$ASCIIBLOG_ROOT/.asciiblog/deleted/$postname"
-
 	for file in $(cat "$ASCIIBLOG_ROOT/.asciiblog/post_files/$postname");
 	do
 		mv "$path/$file" "$ASCIIBLOG_ROOT/.asciiblog/deleted/$postname/$file"
 	done
-
 	rm "$ASCIIBLOG_ROOT/.asciiblog/post_files/$postname"
-	echo $1
-	# change this literal in sed
 	new_archive=$(sed "\:$1:d" "$ASCIIBLOG_ROOT/.asciiblog/archive")
-	echo $new_archive
 	echo $new_archive > "$ASCIIBLOG_ROOT/.asciiblog/archive"
 }
 
+# initiates an asciiblog directory
 function init {
 	# TODO: check if dirs already exist and if are created successfully
-
 	# We need to create the files and directories needed for the AsciiBLog to work
-
 	# Hidden directory with settings and other stuff that aren't regularly needed
 	mkdir .asciiblog
 	echo "Initialized empty AsciiBlog repository in $(pwd)/.asciiblog"	
-	
 	echo "images-dir=/etc/asciidoc/images" > .asciiblog/configuration
 	echo "javascripts-dir=/etc/asciidoc/javascripts" >> .asciiblog/configuration
-
 	if [ -d "/etc/asciiblog" ]
 	then
 		echo "layouts-dir=/etc/asciiblog/layouts" >> .asciiblog/configuration
@@ -457,13 +451,9 @@ function init {
 		cp -r $(dirname "$0")/styles .asciiblog
 		cp -r $(dirname "$0")/pages .
 	fi
-
-	# Optional directories in .asciiblog
-	# images
-	# javascripts
-	# layouts
-	# styles
-
+	echo 'site-url=http:\\example.com' >> .asciiblog/configuration
+	echo 'site-description=Just a site' >> .asciiblog/configuration
+	# Optional directories in .asciiblog are images, javascripts, layouts and styles
 	mkdir .asciiblog/post_files
 	mkdir archive
 	mkdir website
@@ -484,7 +474,6 @@ do
 		build-all)
 			rm -rf "$ASCIIBLOG_ROOT/website/"*
 			build_website
-			#mv "/etc/asciiblog/pages/archive.txt" "$ASCIIBLOG_ROOT/pages/archive.txt"
 			build_all_posts
 			exit 0
 			;;

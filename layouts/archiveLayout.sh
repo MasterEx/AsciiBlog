@@ -6,7 +6,7 @@ head='
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<title>Archive</title>
+<title>AsciiBlog Indexing</title>
 <link rel="stylesheet" href="'$path'styles/xhtml11.css" type="text/css" />
 <link rel="stylesheet" href="'$path'styles/layout2.css" type="text/css" />
 </head>
@@ -27,7 +27,7 @@ head='
 <div id="layout-content-box">
 <div id="layout-content">
 <div id="header">
-<h1>Archive</h1>
+<h1>Directory Index</h1>
 </div>
 <div id="preamble">
 <div class="sectionbody">
@@ -39,7 +39,6 @@ tail='
 Unless otherwise expressly stated, all original material on this page created
 by Periklis Ntanasis is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/3.0/gr/deed.en">Creative Commons Attribution-Share Alike 3.0 Greece License</a>.
 </div>
-
 <div id="footer-badges">
 <a href="http://validator.w3.org/check?uri=referer">
   <img style="border:0;width:88px;height:31px"
