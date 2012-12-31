@@ -12,6 +12,7 @@
 # * Rename local variables
 # * Write the help
 # * Check if wrong number of arguments
+# * Fic missing ArchiveYearLayout.sh error
 # MAYBES
 # * Change the path variable in the archive function and use a global with the blog's url
 # * Passing arguments to rsswriter normally
