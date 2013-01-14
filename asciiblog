@@ -180,7 +180,7 @@ function create_rss {
 }
 
 # checks if we are under an asciiblog directory and sets some globals
-if [ $1 != "init" ]
+if [ $1 != "init" ] && [ $1 != "help" ]
 then
 	ASCIIBLOG_DIR=$(directory_check)
 	ASCIIBLOG_ROOT="$(cd $ASCIIBLOG_DIR/.. && pwd)"
