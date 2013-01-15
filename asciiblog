@@ -19,6 +19,7 @@
 # * Merge rsswriter with asciiblog
 
 ASCIIBLOG_VERSION='1.0a'
+shopt -s extglob 
 
 # echoes the help message
 function show_help {
@@ -386,13 +387,13 @@ function tmp_build {
 		postname="$(echo $post | tr // '\n' | tail -1)"
 		mkdir -p "$tempdir/archive/$year/$month/$day"
 		$ASCIIDOC_HTML -o"$tempdir/archive/$year/$month/$day/$(basename $postname .txt).html" "$post"
-		cp -r "$(dirname $post)/"*[!"$postname"] "$tempdir/archive/$year/$month/$day" &> /dev/null
+		cp -r "$(dirname $post)/"*!("$postname") "$tempdir/archive/$year/$month/$day" &> /dev/null
 	done
 	for files in $(ls $ASCIIBLOG_ROOT/tmp)
 	do
 		mkdir -p "$tempdir/archive/$YEAR/$MONTH/$DAY"
 		$ASCIIDOC_HTML -o"$tempdir/archive/$YEAR/$MONTH/$DAY/$files.html" "$ASCIIBLOG_ROOT/tmp/$files/$files.txt"
-		cp -r "$ASCIIBLOG_ROOT/tmp/$files/"*[!"$files.txt"] "$tempdir/archive/$YEAR/$MONTH/$DAY" &> /dev/null
+		cp -r "$ASCIIBLOG_ROOT/tmp/$files/"*!("$files.txt") "$tempdir/archive/$YEAR/$MONTH/$DAY" &> /dev/null
 		echo "$YEAR^$MONTH^$DAY^$TIME^$ASCIIBLOG_ROOT/tmp/$files/${files}.txt" >> "$tempdir/archive_list"
 	done
 	previous_year='NaN'
