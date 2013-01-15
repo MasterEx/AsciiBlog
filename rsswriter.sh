@@ -12,8 +12,8 @@ echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>
   <channel>
     <atom:link href=\"$1\" rel=\"self\" type=\"application/rss+xml\"/>
     <title>$2</title>
-    <link>$3</link>
-    <description>$4</description>" > $FILE
+    <link>$1</link>
+    <description>$3</description>" > $FILE
 }
 
 function close {

@@ -171,10 +171,15 @@ function create_rss {
 		link="$(basename $(echo $entry | cut -d'^' -f5) .txt).html"		
 		line_number=$(cat $(echo $entry | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
 		title=$(cat $(echo $entry | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
-		description=$(cat $pageroot/archive/$year/$month/$day/$link | tr '\n' ' ' | sed -e 's/.*<!-- MAIN_BODY -->//g' | sed -e 's/<!-- MAIN_BODY_END -->.*//g')
+		description="$(awk -vlink="$SITE_URL/archive/$year/$month/$day" '
+BEGIN{ r = sprintf("src=\"%s/", link) }
+/<!-- MAIN_BODY -->/{f=1;next} /<!-- MAIN_BODY_END -->/{exit}
+f && index($0, "<img") { sub(/src="/, r) } f
+' "$pageroot/archive/$year/$month/$day/$link")"
+		
 		oitem "$title" "$SITE_URL/archive/$year/$month/$day/$link"
 		ipubDate "$date"
-		guid "$SITE_URL/$link"
+		guid "$SITE_URL/archive/$year/$month/$day/$link"
 		citem
 	done	
 	close
