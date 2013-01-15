@@ -232,7 +232,8 @@ function build_all_posts {
 		mkdir -p $blogpostroot
 		LAYOUT=myBlogPost
 		ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=../../../../images/icons"
-		$ASCIIDOC_HTML -o"$blogpostroot/$(basename $file .txt).html" "$file"		
+		$ASCIIDOC_HTML -o"$blogpostroot/$(basename $file .txt).html" "$file"
+		cp -r "$(dirname $file)/"*!("$(basename $file)") "$blogpostroot" &> /dev/null
 		postname="$(basename $file .txt)"
 		line_number=$(cat $(echo $file | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
 		file=$(cat $(echo $file | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
