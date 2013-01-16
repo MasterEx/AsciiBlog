@@ -123,7 +123,7 @@ function archive {
 					article_path=$(cat $2 | grep $(basename $article .html) | cut -d'^' -f 5)
 					line_number=$(cat $article_path | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
 					article_title=$(cat $article_path | sed -n $((${line_number}-1))p)
-					echo "<a href=\""$article"\">"$article_title"</a><br/>" >> "$archive/$year/$month/$day/index.html"
+					echo "<a href=\""$(basename $article)"\">"$article_title"</a><br/>" >> "$archive/$year/$month/$day/index.html"
 				done			
 				echo $tail >> "$archive/$year/$month/$day/index.html"				
 				echo "<a href=\""$day"\">"$day"</a><br/>" >> "$archive/$year/$month/index.html"				
