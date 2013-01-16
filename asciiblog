@@ -157,7 +157,7 @@ function create_rss {
 	. "$(dirname "$0")/rsswriter.sh"
 	pageroot="$1"
 	FILE="$pageroot/archive.rss"
-	open "$SITE_URL/archive.rss" "$SITE_DESCRIPTION"
+	open "$SITE_URL/archive.rss" "$SITE_TITLE" "$SITE_DESCRIPTION"
 	language "en-us"
 	generator "just a shell script"
 	for entry in $(cat $2 | sort -r)
@@ -195,6 +195,7 @@ then
 	STYLES="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration styles-dir)"
 	LAYOUTS="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration layouts-dir)"
 	SITE_URL="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration site-url)"
+	SITE_TITLE="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration site-title)"
 	SITE_DESCRIPTION="$(readArguments $ASCIIBLOG_ROOT/.asciiblog/configuration site-description)"
 	YEAR="$(date +%Y)"
 	MONTH="$(date +%m)"
@@ -238,7 +239,7 @@ function build_all_posts {
 		LAYOUT=myBlogPost
 		ASCIIDOC_HTML="asciidoc --conf-file=$LAYOUTS/${LAYOUT}.conf --attribute icons --attribute iconsdir=../../../../images/icons"
 		$ASCIIDOC_HTML -o"$blogpostroot/$(basename $file .txt).html" "$file"
-		cp -r "$(dirname $file)/"*!("$(basename $file)") "$blogpostroot" &> /dev/null
+		cp -r "$(dirname $file)/"!("$(basename $file)") "$blogpostroot" &> /dev/null
 		postname="$(basename $file .txt)"
 		line_number=$(cat $(echo $file | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
 		file=$(cat $(echo $file | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
