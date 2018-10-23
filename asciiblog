@@ -121,7 +121,7 @@ function archive {
 				echo $head > "$archive/$year/$month/$day/index.html"
 				for article in $(ls $archive/$year/$month/$day/*.html| grep -v "index.html"); do
 					article_path=$(cat $2 | grep $(basename $article .html) | cut -d'^' -f 5)
-					line_number=$(cat $article_path | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+					line_number=$(cat $article_path | grep -e '--*-' -n | head -1 | cut -d':' -f'1')
 					article_title=$(cat $article_path | sed -n $((${line_number}-1))p)
 					echo "<a href=\""$(basename $article)"\">"$article_title"</a><br/>" >> "$archive/$year/$month/$day/index.html"
 				done			
@@ -169,7 +169,7 @@ function create_rss {
 		date="$year/$month/$day $time"
 		date=$(date -d "$date" -R)
 		link="$(basename $(echo $entry | cut -d'^' -f5) .txt).html"		
-		line_number=$(cat $(echo $entry | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		line_number=$(cat $(echo $entry | cut -d'^' -f5) | grep -e '--*-' -n | head -1 | cut -d':' -f'1')
 		title=$(cat $(echo $entry | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
 		description="$(awk -vlink="$SITE_URL/archive/$year/$month/$day" '
 BEGIN{ r = sprintf("src=\"%s/", link) }
@@ -241,7 +241,7 @@ function build_all_posts {
 		$ASCIIDOC_HTML -o"$blogpostroot/$(basename $file .txt).html" "$file"
 		cp -r "$(dirname $file)/"!("$(basename $file)") "$blogpostroot" &> /dev/null
 		postname="$(basename $file .txt)"
-		line_number=$(cat $(echo $file | cut -d'^' -f5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		line_number=$(cat $(echo $file | cut -d'^' -f5) | grep -e '--*-' -n | head -1 | cut -d':' -f'1')
 		file=$(cat $(echo $file | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
 		if [ $previous_year != $year ]
 		then
@@ -314,7 +314,7 @@ function post {
 			archive_entries="$archive_entries $($LAYOUTS/archiveYearLine.sh "$year")"
 		fi
 		previous_year="$year"
-		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '--*-' -n | head -1 | cut -d':' -f'1')
 		article=$(cat $(echo $line | cut -d'^' -f5) | sed -n $((${line_number}-1))p)
 		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$article")"
 	done	
@@ -416,7 +416,7 @@ function tmp_build {
 			archive_entries="$archive_entries $($LAYOUTS/archiveYearLine.sh "$year")"
 		fi
 		previous_year="$year"
-		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '-*-' -n | head -1 | cut -d':' -f'1')
+		line_number=$(cat $(echo $line | cut -d'^' -f 5) | grep -e '--*-' -n | head -1 | cut -d':' -f'1')
 		article=$(cat $(echo $line | cut -d'^' -f 5) | sed -n $((${line_number}-1))p)
 		archive_entries="$archive_entries $($LAYOUTS/archiveLine.sh $year $month $day ${postname} "$article")"
 	done
