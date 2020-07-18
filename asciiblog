@@ -427,7 +427,7 @@ function tmp_build {
 	$ASCIIDOC_HTML -o"$pageroot/archive.html" "$LAYOUTS/empty.txt"
 	archive $tempdir "$tempdir/archive_list"
 	create_rss $tempdir "$tempdir/archive_list"
-	$BROWSER "$tempdir/index.html" &> /dev/null || echo "Temp build: $tempdir/index.html"
+	$BROWSER "$tempdir/index.html" &> /dev/null || echo "Temp build: file://$tempdir/index.html"
 	read -p "HIT ENTER TO TERMINATE THE TEMPORARY VIEW"
 	rm -rf $tempdir
 }
